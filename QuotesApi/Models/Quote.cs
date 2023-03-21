@@ -7,7 +7,7 @@ namespace QuotesApi.Models
         public int Id { get; set; }
         [Required]
         [StringLength(30)]
-        public string Title { get; set; }
+        public string Title { get; set; } 
         [Required]
         [StringLength(30)]
         public string Author { get; set; }

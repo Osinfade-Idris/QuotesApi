@@ -14,6 +14,7 @@ builder.Services.AddDbContext<QuotesDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMvc().AddXmlSerializerFormatters();
+builder.Services.AddResponseCaching();
 
 var app = builder.Build();
 
@@ -22,6 +23,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseResponseCaching();
 }
 
 app.UseHttpsRedirection();
