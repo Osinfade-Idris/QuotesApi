@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using QuotesApi.Data;
 using QuotesApi.Models;
+using System.Linq;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -18,14 +19,27 @@ namespace QuotesApi.Controllers
 
         // GET: api/<QuotesController>
         [HttpGet]
-        public IActionResult Get()
+        public IActionResult Get(string sort)
         {
-            //return _quotesDbContext.Quotes;
-            return Ok(_quotesDbContext.Quotes);
+            IQueryable<Quote> quotes;
+            switch (sort)
+            {
+                case "desc":
+                    quotes = _quotesDbContext.Quotes.OrderByDescending(q => q.CreatedAt);
+                    break;
+                case "asc":
+                    quotes = _quotesDbContext.Quotes.OrderBy(q => q.CreatedAt);
+                    break;
+                default:
+                    quotes = _quotesDbContext.Quotes;
+                    break;
+
+            }
+            return Ok(quotes);
         }
 
         // GET api/<QuotesController>/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "Get")]
         public IActionResult Get(int id)
         {
             var quote = _quotesDbContext.Quotes.Find(id);
@@ -38,6 +52,32 @@ namespace QuotesApi.Controllers
                 return Ok(quote);
             }
         }
+
+        [HttpGet("[action]/{id}")]
+        public int Test(int id)
+        {
+            return id;
+        }
+
+        [HttpGet("[action]")]
+        public IActionResult PagingQuote(int? pageNumber, int? pageSize)
+        {
+            var quote = _quotesDbContext.Quotes;
+            var currentpageNumber =  pageNumber ?? 1;
+            var currentpageSize = pageSize ?? 5;
+
+            return Ok(quote.Skip((currentpageNumber - 1)* currentpageSize).Take(currentpageSize));
+        }
+
+        [HttpGet("[action]")]
+        public IActionResult SearchQuote(string type)
+        {
+            var quotes = _quotesDbContext.Quotes.Where(q => q.Type.StartsWith(type));
+            return Ok(quotes);
+        }
+
+
+
 
         // POST api/<QuotesController>
         [HttpPost]
@@ -62,6 +102,8 @@ namespace QuotesApi.Controllers
                 entity.Title = quote.Title;
                 entity.Description = quote.Description;
                 entity.Author = quote.Author;
+                entity.Type = quote.Type;
+                entity.CreatedAt = quote.CreatedAt;
                 _quotesDbContext.SaveChanges();
                 return Ok("Record Updated Succesfully");
             }
