@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using QuotesApi.Data;
 using QuotesApi.Models;
 using System.Linq;
+using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -9,6 +11,7 @@ namespace QuotesApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    /*[Authorize]*/
     public class QuotesController : ControllerBase
     {
         private QuotesDbContext _quotesDbContext;
@@ -84,6 +87,8 @@ namespace QuotesApi.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] Quote quote)
         {
+            string userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            quote.UserId = userId;
             _quotesDbContext.Quotes.Add(quote);
             _quotesDbContext.SaveChanges();
             return StatusCode(StatusCodes.Status201Created);
@@ -93,10 +98,15 @@ namespace QuotesApi.Controllers
         [HttpPut("{id}")]
         public IActionResult Put(int id, [FromBody] Quote quote)
         {
-           var entity = _quotesDbContext.Quotes.Find(id);
+            string userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            var entity = _quotesDbContext.Quotes.Find(id);
             if (entity == null)
             {
                 return NotFound("Record Not Found");
+            }
+            if (userId != entity.UserId)
+            {
+                return BadRequest("Sorry, you cant update this record");
             }
             else
             {

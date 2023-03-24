@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using QuotesApi.Data;
 
@@ -16,6 +17,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddMvc().AddXmlSerializerFormatters();
 builder.Services.AddResponseCaching();
 
+// 1. Add Authentication Services
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.Authority = "https://drizzquotesapi.us.auth0.com/";
+    options.Audience = "https://localhost:44337/";
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -24,6 +36,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseResponseCaching();
+
+    // 2. Enable authentication middleware
+    app.UseAuthentication();
 }
 
 app.UseHttpsRedirection();
