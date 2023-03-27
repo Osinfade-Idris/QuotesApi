@@ -11,7 +11,7 @@ namespace QuotesApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    /*[Authorize]*/
+    [Authorize]
     public class QuotesController : ControllerBase
     {
         private QuotesDbContext _quotesDbContext;
@@ -22,6 +22,7 @@ namespace QuotesApi.Controllers
 
         // GET: api/<QuotesController>
         [HttpGet]
+        [AllowAnonymous]
         [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any)]
         public IActionResult Get(string? sort)
         {
@@ -57,11 +58,6 @@ namespace QuotesApi.Controllers
             }
         }
 
-        [HttpGet("[action]/{id}")]
-        public int Test(int id)
-        {
-            return id;
-        }
 
         [HttpGet("[action]")]
         public IActionResult PagingQuote(int? pageNumber, int? pageSize)
@@ -80,7 +76,16 @@ namespace QuotesApi.Controllers
             return Ok(quotes);
         }
 
+     
+        [HttpGet("[action]")]
+        public IActionResult MyQuote(string type)
+        {
+            string userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            var quotes = _quotesDbContext.Quotes.Where(q => q.UserId == userId);
+            return Ok(quotes);
+        }
 
+            
 
 
         // POST api/<QuotesController>
@@ -106,7 +111,7 @@ namespace QuotesApi.Controllers
             }
             if (userId != entity.UserId)
             {
-                return BadRequest("Sorry, you cant update this record");
+                return BadRequest("Sorry, you can't update this record");
             }
             else
             {
@@ -125,10 +130,15 @@ namespace QuotesApi.Controllers
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
+            string userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var quote = _quotesDbContext.Quotes.Find(id);
             if (quote == null)
             {
                 return NotFound("Record Not Found");
+            }
+            if (userId != quote.UserId)
+            {
+                return BadRequest("You cant delete this record");
             }
             else
             {
